@@ -1,0 +1,92 @@
+#include <IRremote.h>
+#include <Servo.h>
+
+const int MOTION_SENSOR_PIN = 9;
+const int SERVO_PIN = 11;
+Servo servo;
+
+int angle = 0;          // the current angle of servo motor
+int lastMotionState;    // the previous state of motion sensor
+int currentMotionState; // the current state of motion sensor
+
+
+int IRpin = 13;
+IRrecv irrecv(IRpin);
+decode_results results;
+
+
+void setup(){
+  Serial.begin(9600);
+  irrecv.enableIRIn();
+  pinMode(MOTION_SENSOR_PIN, INPUT); // set arduino pin to input mode
+  servo.attach(SERVO_PIN);           // attaches the servo on pin 9 to the servo object
+
+  servo.write(angle);
+  currentMotionState = digitalRead(MOTION_SENSOR_PIN);
+
+}
+
+bool even = 0;
+
+void loop(){
+  // if (irrecv.decode(&results)){
+  //   Serial.println(results.value, DEC);
+  //   irrecv.resume();
+  // }
+  lastMotionState    = currentMotionState;             // save the last state
+  currentMotionState = digitalRead(MOTION_SENSOR_PIN); // read new state
+  if (irrecv.decode(&results)) 
+   {
+     irrecv.resume();   // Receive the next value
+   }
+  if (results.value == 16753245)  
+    {
+      servo.attach(11);
+      //servo.write(180);
+      servo.write(135); //counterclockwise
+      delay(1000);
+      servo.write(90);
+      servo.detach();
+      results.value = 0;
+      
+    }
+  if (results.value == 16736925)
+  {
+    servo.attach(11);
+    servo.write(45);
+    delay(1000);
+    servo.write(90);
+    servo.detach();
+    results.value = 0;
+    //servo.write(0);
+  
+  
+  }
+
+  if (currentMotionState == LOW && lastMotionState == HIGH) { // pin state change: LOW -> HIGH
+      Serial.println("Motion detected!");
+      servo.attach(11);
+      if (even == 0) {
+        servo.write(135);
+        delay(1000);
+        servo.write(90);
+        even = 1;
+      } else {
+        servo.write(45);
+        delay(1000);
+        servo.write(90);
+        even = 0;
+      }
+    
+    }
+    else
+    if (currentMotionState == HIGH && lastMotionState == LOW) { // pin state change: HIGH -> LOW
+      Serial.println("Motion stopped!");
+      servo.detach();
+    }
+
+}
+
+//16753245   1 button
+
+// 16736925 2 button
